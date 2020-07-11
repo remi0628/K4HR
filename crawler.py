@@ -1,26 +1,46 @@
+import re
+import datetime
 import requests
-from bs4 import BeautifulSoup
+from bs4 import BeautifulSoup as bs4
+from urllib.request import urlopen, urljoin, urlparse
 
-def url_to_soup(url):
-    req = requests.get(url)
-    return BeautifulSoup(req.content, 'html.parser')
+HOME_URL = 'https://www.nankankeiba.com'
+URL = 'https://www.nankankeiba.com/uma_shosai/2020071020060501.do'
 
-def horse_page_link(url):
+TXT_PATH = './data/uma.txt'
+
+def main():
+    day, list = horse_page_link(URL)
+    text_write(day)
+
+
+def url_to_soup(url): # レース情報ページ取得
+    html = urlopen(URL)
+    return bs4(html, 'lxml')
+
+def horse_page_link(url): # 各馬の過去情報URL取得 　return（レース日[y-m-d], 過去情報[URL]）
+    blank_link_list = []
     soup = url_to_soup(url)
-    link_list = [HOME_URL + x.get('href') for x in soup.find_all('a', class_='tx-mid tx-low') ]
-    return link_list
-tag_to_text = lambda x: p.sub("", x).split('\n')
-split_tr = lambda x: str(x).split('</tr>')
+    race_today = race_day(soup)
+    for tx_mid in soup.find_all('span', class_='tx-mid'):
+        for uma_data_link in tx_mid.find_all('a'):
+            blank_link_list.append(HOME_URL + uma_data_link.get('href'))
+    print(race_today, blank_link_list)
+    return race_today, blank_link_list
 
-def get_previous_race_row(soup):
-    race_table = soup.select("table.tb01")[2]
-    return [tag_to_text(x)  for x in split_tr(race_table)]
+def race_day(soup): # レース日 datetimeオブジェクトに変換 return[y-m-d]
+    today = soup.find('span', class_='tx-small').text.strip()
+    today = re.split('[年月日]', today)
+    del today[-1]
+    race_day = datetime.date(year=int(today[0]), month=int(today[1]), day=int(today[2]))
+    return race_day
 
-def horse_data(url, race_date):
-    soup = url_to_soup(url)
 
-    # 過去のレースデータ
-    pre_race_data = get_previous_race_row(soup)
-    df = pd.DataFrame(pre_race_data)[1:][[2,3,10,11,13,14,15,19,23]].dropna().rename(columns={
-        2:'date', 3:'place', 10:'len', 11:'wether', 13:'popularity', 14:'rank', 15:'time',19:'weight',23:'money'})
-    return df
+
+def text_write(data): # 入ってきたものをtxtに記述　確認用
+    with open(TXT_PATH, 'w', encoding='UTF-8') as file:
+        file.write(str(data))
+
+
+if __name__ == '__main__':
+    main()

@@ -5,6 +5,7 @@ from bs4 import BeautifulSoup as bs4
 from urllib.request import urlopen, urljoin, urlparse
 
 HOME_URL = 'https://www.nankankeiba.com'
+####  https://www.nankankeiba.com/uma_shosai/
 URL = 'https://www.nankankeiba.com/uma_shosai/2020071020060501.do'
 
 TXT_PATH = './data/uma.txt'
@@ -29,12 +30,17 @@ def horse_page_link(url): # 各馬の過去情報URL取得 　return（レース
     return race_today, blank_link_list
 
 def race_day(soup): # レース日 datetimeオブジェクトに変換 return[y-m-d]
+    race_len = int(soup.find(id="race-data01-a").get_text().replace('\n','').split('　')[3].replace(',','')[1:5])
+    condition = soup.find(id="race-data02").get_text().replace('\n','').split('　')[2][0:1]
     today = soup.find('span', class_='tx-small').text.strip()
     today = re.split('[年月日]', today)
     del today[-1]
     race_day = datetime.date(year=int(today[0]), month=int(today[1]), day=int(today[2]))
     return race_day
 
+def horse_race_data(soup):
+    soup = url_to_soup(url)
+    #for tx_mid in soup.find_all('span', class_='tx-mid'):
 
 
 def text_write(data): # 入ってきたものをtxtに記述　確認用

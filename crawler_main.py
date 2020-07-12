@@ -92,7 +92,7 @@ def create_data_frame(url): #データフレーム作成
     blank_link_list = horse_page_link(URL)
     for i in range(len(blank_link_list)):
         horse_path = horse_data_csv(blank_link_list[i], race_date, CSV_DATA_PATH)
-        df.append(pd.read_csv(horse_path))
+        df.append(pd.read_csv(horse_path, encoding='SHIFT-JIS'))
     return df
 if __name__ == '__main__':
     main()

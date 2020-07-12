@@ -14,7 +14,7 @@ def horse_data_csv(url, date=datetime.date.today(), folder=""):
 
     # 競走馬詳細データサイト内には表が3つ　その内3つめの出走履歴を取得
     tab = soup.find_all('table', class_='tb01 w100pr bg-over stripe al-center')[2]
-    with open(csv_name, "w", encoding='utf-8') as file:
+    with open(csv_name, "w", newline="", encoding='SHIFT-JIS') as file:
         writer = csv.writer(file)
         rows = tab.find_all("tr")
         for i, row in enumerate(rows):

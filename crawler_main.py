@@ -6,6 +6,9 @@ import pandas as pd
 from bs4 import BeautifulSoup as bs4
 from urllib.request import urlopen, urljoin, urlparse
 
+from crawler_csv import horse_data_csv # 馬の詳細URL渡してcsvファイル作成
+
+CSV_DATA_PATH = 'data/'
 HOME_URL = 'https://www.nankankeiba.com'
 #### https://www.nankankeiba.com/race_info/
 URL = 'https://www.nankankeiba.com/race_info/2020071020060501.do'
@@ -13,7 +16,16 @@ BLANK_URL = 'https://www.nankankeiba.com/uma_info/2017100322.do'
 
 
 def main():
-    create_data_frame(URL)
+    #create_data_frame(URL)
+    print(create_data_frame(URL))
+    '''
+    day = datetime.date(2019, 12, 9)
+    horse_path = horse_data_csv(BLANK_URL, day, CSV_DATA_PATH)
+    print(horse_path)
+
+    import pandas as pd
+    print(pd.read_csv(horse_path))
+    '''
     #print(horse_data(BLANK_URL))
 
 
@@ -34,6 +46,7 @@ def get_previous_race_row(soup): # 競走馬詳細データから出走履歴取
     race_table = soup.find_all('table', class_='tb01 w100pr bg-over stripe al-center')[2] # 競走馬詳細データサイト内には表が3つ　その内3つめの出走履歴を取得
     return [tag_to_text(x) for x in split_tr(race_table)]
 
+'''
 def horse_data(url): # 出走履歴からデータ作成
     soup = url_to_soup(url)
     blank_race_data = get_previous_race_row(soup) # 過去のレースデータ
@@ -52,7 +65,7 @@ def blank_race_day_calc(blank_race_data): # 出走履歴何番目を取得する
         year = '20' + day[0]
         race_day = datetime.date(year=int(year), month=int(day[1]), day=int(day[2])) # datetime.datetimeオブジェクト y-m-d
         print(race_day)
-
+'''
 
 # 当日データ取得
 def result_data(url): # レース結果取得 return[1着馬, 土の状態, レースの長さ, レース日]
@@ -63,6 +76,7 @@ def result_data(url): # レース結果取得 return[1着馬, 土の状態, レ�
     race_date = race_day(soup) # レース日付
     return race_top, condition, race_len, race_date
 
+# レース日取得
 def race_day(soup): # レース日 datetimeオブジェクトに変換 return datetime.date[y-m-d]
     today = soup.find('span', class_='tx-small').text.strip()
     today = re.split('[年月日]', today)
@@ -72,12 +86,13 @@ def race_day(soup): # レース日 datetimeオブジェクトに変換 return da
 
 
 def create_data_frame(url): #データフレーム作成
+    df = []
     race_top, condition, race_len, race_date = result_data(URL) # レース当日データ取得
     print('#レース当日データ#\n', '日付：{}, レース距離：{}, 土の状態：{}, 1位馬番：{}'.format(race_date, race_len, condition, race_date))
     blank_link_list = horse_page_link(URL)
     for i in range(len(blank_link_list)):
-        print(horse_data(blank_link_list[i]))
-    soup = url_to_soup(BLANK_URL)
-
+        horse_path = horse_data_csv(blank_link_list[i], race_date, CSV_DATA_PATH)
+        df.append(pd.read_csv(horse_path))
+    return df
 if __name__ == '__main__':
     main()

@@ -6,11 +6,11 @@ from bs4 import BeautifulSoup
 HOME_URL = 'https://www.nankankeiba.com'
 RACE_PROGRAM_URL = 'https://www.nankankeiba.com/program/20200710200605.do'
 RACE_LIST_HELF_PERIOD = 'https://www.nankankeiba.com/calendar/202004.do'
-RACE_PROGRAM_URL = '/program/20190401210101.do'
+# RACE_PROGRAM_URL = '/program/20190401210101.do'
 MAX_DATE = datetime.date(year=2020, month=7, day=10)
 
 # 1日のレース一覧ページを渡すと12R全てリンクを取得してくる
-def race_list_day(race_program_url): # 最大12loop
+def race_list_day(race_program_url): #
     race_list = []
     soup = BeautifulSoup(requests.get(race_program_url).content, 'html.parser')
     table = soup.find_all("table")
@@ -22,10 +22,9 @@ def race_list_day(race_program_url): # 最大12loop
                 for cell in row.findAll(['td', 'th']):
                     for a in cell.find_all('a'):
                         if 'race_info' in a.get('href'): # href=''リンク内に[race_info]があるURLのみ取得 レースの出走表
-                            print(a.get_text())
+                            race_day = give_date(a.get('href')) # レース日取得
                             race_list.append(HOME_URL + a.get('href'))
-        print(len(race_list))
-        break
+    print('{}：レース数：{}  リンクを取得しました。'.format(race_day, len(race_list)))
     return race_list
 
 
@@ -58,14 +57,19 @@ def race_half_program_list(race_half_period_calendar_url): #
 
 
 def give_date(race_program_url): # urlからレース日を取得
-    day = datetime.date(year=int(race_program_url[9:13]), month=int(race_program_url[13:15]), day=int(race_program_url[15:17]))
+    day = ""
+    if 'program' in race_program_url:
+        day = datetime.date(year=int(race_program_url[9:13]), month=int(race_program_url[13:15]), day=int(race_program_url[15:17]))
+    elif 'race_info' in race_program_url:
+        day = datetime.date(year=int(race_program_url[11:15]), month=int(race_program_url[15:17]), day=int(race_program_url[17:19]))
     return day
 
 
 def main():
-    race_program_url_list = race_half_program_list(RACE_LIST_HELF_PERIOD)
-    for i in  range(len(race_program_url_list)):
-        print(race_program_url_list[i])
+    #race_program_url_list = race_half_program_list(RACE_LIST_HELF_PERIOD)
+    race_list_day(RACE_PROGRAM_URL)
+    #for i in  range(len(race_program_url_list)):
+        #race_list_day(race_program_url_list[i])
     #print(race_program_url)
     #race_program_list = race_list_day(RACE_PROGRAM_URL)
     #print(MAX_DATE)

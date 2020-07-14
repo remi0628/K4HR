@@ -13,7 +13,7 @@ from race_link_collection import horse_race_list # 半期開催日程URLを渡�
 CSV_DATA_PATH = crawler_settings.CSV_DATA_PATH
 HOME_URL = crawler_settings.HOME_URL
 #### https://www.nankankeiba.com/race_info/
-URL = 'https://www.nankankeiba.com/race_info/2020071020060501.do'
+URL = 'https://www.nankankeiba.com/race_info/2020060120040101.do'
 BLANK_URL = 'https://www.nankankeiba.com/uma_info/2017100322.do'
 RACE_LIST_HELF_PERIOD = 'https://www.nankankeiba.com/calendar/202004.do'
 
@@ -58,10 +58,12 @@ def blank_race_day_calc(blank_race_data): # 出走履歴何番目を取得する
 
 # 当日データ取得
 def result_data(url): # レース結果取得 return[1着馬, 土の状態, レースの長さ, レース日]
-    soup = url_to_soup(url)
+    result_url = url[0:28] + 'result' + url[-20:]
+    print(result_url)
+    soup = url_to_soup(result_url)
     condition = soup.find(id="race-data02").get_text().replace('\n','').split('　')[2][0:1] # 土の状態
     race_len = int(soup.find(id="race-data01-a").get_text().replace('\n','').split('　')[3].replace(',','')[1:5]) # レースの長さ
-    race_top = soup.find('td', class_='bg-3 al-center').get_text() # 1位
+    race_top = soup.find('tr', class_='bg-1chaku').contents[5].string # 1位
     race_date = race_day(soup) # レース日付
     return race_top, condition, race_len, race_date
 
@@ -85,23 +87,18 @@ def create_data_frame(url): #データフレーム作成
     return horse_path
 
 
-
-def main():
+def create_data_csv(url): # 半期分レースに出場した馬のCSVファイル作成
     horse_path_list = []
-    helf_piriod_race_list = horse_race_list(RACE_LIST_HELF_PERIOD)
+    helf_piriod_race_list = horse_race_list(url)
     for i in range(len(helf_piriod_race_list)): # 半期全レースページを渡す
         horse_path_list.append(create_data_frame(helf_piriod_race_list[i]))
     print('馬のデータを{}個CSVデータにしました。'.format(len(horse_path_list)))
+    return list(itertools.chain.from_iterable(horse_path_list)) # 2次元リストを1次元リストに平坦化
 
-    '''
-    day = datetime.date(2019, 12, 9)
-    horse_path = horse_data_csv(BLANK_URL, day, CSV_DATA_PATH)
-    print(horse_path)
 
-    import pandas as pd
-    print(pd.read_csv(horse_path))
-    '''
-    #print(horse_data(BLANK_URL))
+def main():
+    create_data_csv(RACE_LIST_HELF_PERIOD)
+
 
 
 if __name__ == '__main__':

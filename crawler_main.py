@@ -6,27 +6,16 @@ import pandas as pd
 from bs4 import BeautifulSoup as bs4
 from urllib.request import urlopen, urljoin, urlparse
 
+import crawler_settings  # crawlerの設定ファイル
 from crawler_csv import horse_data_csv # 馬の詳細URL渡してcsvファイル作成
+from race_link_collection import horse_race_list # 半期開催日程URLを渡すと半期分のレースURLを返す
 
-CSV_DATA_PATH = 'data/'
-HOME_URL = 'https://www.nankankeiba.com'
+CSV_DATA_PATH = crawler_settings.CSV_DATA_PATH
+HOME_URL = crawler_settings.HOME_URL
 #### https://www.nankankeiba.com/race_info/
 URL = 'https://www.nankankeiba.com/race_info/2020071020060501.do'
 BLANK_URL = 'https://www.nankankeiba.com/uma_info/2017100322.do'
-
-
-def main():
-    #create_data_frame(URL)
-    print(create_data_frame(URL))
-    '''
-    day = datetime.date(2019, 12, 9)
-    horse_path = horse_data_csv(BLANK_URL, day, CSV_DATA_PATH)
-    print(horse_path)
-
-    import pandas as pd
-    print(pd.read_csv(horse_path))
-    '''
-    #print(horse_data(BLANK_URL))
+RACE_LIST_HELF_PERIOD = 'https://www.nankankeiba.com/calendar/202004.do'
 
 
 def url_to_soup(url): # レース情報ページ取得
@@ -87,12 +76,33 @@ def race_day(soup): # レース日 datetimeオブジェクトに変換 return da
 
 def create_data_frame(url): #データフレーム作成
     df = []
-    race_top, condition, race_len, race_date = result_data(URL) # レース当日データ取得
-    print('#レース当日データ#\n', '日付：{}, レース距離：{}, 土の状態：{}, 1位馬番：{}'.format(race_date, race_len, condition, race_date))
-    blank_link_list = horse_page_link(URL)
+    race_top, condition, race_len, race_date = result_data(url) # レース当日データ取得
+    print('#レース当日データ#\n', '日付：{}, レース距離：{}, 土の状態：{}, 1位馬番：{}'.format(race_date, race_len, condition, race_top))
+    blank_link_list = horse_page_link(url)
     for i in range(len(blank_link_list)):
         horse_path = horse_data_csv(blank_link_list[i], race_date, CSV_DATA_PATH)
-        df.append(pd.read_csv(horse_path, encoding='SHIFT-JIS'))
-    return df
+        #df.append(pd.read_csv(horse_path, encoding='SHIFT-JIS')) # テスト時はコメントアウト
+    return horse_path
+
+
+
+def main():
+    horse_path_list = []
+    helf_piriod_race_list = horse_race_list(RACE_LIST_HELF_PERIOD)
+    for i in range(len(helf_piriod_race_list)): # 半期全レースページを渡す
+        horse_path_list.append(create_data_frame(helf_piriod_race_list[i]))
+    print('馬のデータを{}個CSVデータにしました。'.format(len(horse_path_list)))
+
+    '''
+    day = datetime.date(2019, 12, 9)
+    horse_path = horse_data_csv(BLANK_URL, day, CSV_DATA_PATH)
+    print(horse_path)
+
+    import pandas as pd
+    print(pd.read_csv(horse_path))
+    '''
+    #print(horse_data(BLANK_URL))
+
+
 if __name__ == '__main__':
     main()

@@ -9,6 +9,7 @@ import crawler_settings # crawlerの設定ファイル
 HOME_URL = 'https://www.nankankeiba.com'
 RACE_PROGRAM_URL = 'https://www.nankankeiba.com/program/20200710200605.do'
 RACE_LIST_HELF_PERIOD = 'https://www.nankankeiba.com/calendar/202004.do'
+CALENDER_URL = crawler_settings.CALENDER_URL
 MIN_DATE  = crawler_settings.MIN_DATE
 MAX_DATE = crawler_settings.MAX_DATE
 
@@ -93,10 +94,42 @@ def horse_race_list(race_list_helf_period):
     return list(itertools.chain.from_iterable(race_day_list))                        # 2次元リストを1次元リストに平坦化
 
 
+# 指定の日によって対応した半期のurlをリストに入れる
+def half_year_calc():
+    calendar_list = []
+    year_interval = int(MAX_DATE.year) - int(MIN_DATE.year) + 1 # 何年分あるのか計算
+    year = int(MIN_DATE.year)
+    print(year_interval)
+    for i in range(year_interval): # 年数分だけloop
+        if i == 0:
+            month = month_calc(MIN_DATE.month)
+        else:
+            month = '04'
+        calendar_list.append(CALENDER_URL + str(year) + month + '.do')
+        # 後期表示判定
+        max_month = month_calc(MAX_DATE.month)
+        if i == 0 and month == '04':
+            calendar_list.append(CALENDER_URL + str(year) + '10' + '.do')
+        elif i != 0 and  i != (year_interval - 1):
+            calendar_list.append(CALENDER_URL + str(year) + '10' + '.do')
+        elif i != 0 and month != max_month:
+            calendar_list.append(CALENDER_URL + str(year) + max_month + '.do')
+        year += 1
+    print(calendar_list)
+
+# 上半期か下半期か判定
+def month_calc(month):
+    if month in (4, 5, 6, 7, 8, 9):
+        result_month = '04'
+    elif month in (1, 2, 3, 10, 11, 12):
+        result_month = '10'
+    return result_month
+
 
 def main():
-    a = horse_race_list(RACE_LIST_HELF_PERIOD)
-    print(a)
+    #print(horse_race_list(RACE_LIST_HELF_PERIOD))
+    half_year_calc()
+
 
 if __name__ == '__main__':
     main()

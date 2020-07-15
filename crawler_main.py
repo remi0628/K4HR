@@ -92,7 +92,7 @@ def create_data_csv(url): # 半期分レースに出場した馬のCSVファイ�
     helf_piriod_race_list = horse_race_list(url)
     for i in range(len(helf_piriod_race_list)): # 半期全レースページを渡す
         horse_path_list.append(create_data_frame(helf_piriod_race_list[i]))
-    print('馬のデータを{}個CSVデータにしました。'.format(len(horse_path_list)))
+    print('馬のデータを{}個CSVデータにしました。'.format(len(list(itertools.chain.from_iterable(horse_path_list)))))
     return list(itertools.chain.from_iterable(horse_path_list)) # 2次元リストを1次元リストに平坦化
 
 

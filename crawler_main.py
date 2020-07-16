@@ -10,12 +10,9 @@ import crawler_settings  # crawlerの設定ファイル
 from crawler_csv import horse_data_csv  # 馬の詳細URL渡してcsvファイル作成
 from race_link_collection import horse_race_list  # 半期開催日程URLを渡すと半期分のレースURLを返す
 
+#### https://www.nankankeiba.com/race_info/
 CSV_DATA_PATH = crawler_settings.CSV_DATA_PATH
 HOME_URL = crawler_settings.HOME_URL
-#### https://www.nankankeiba.com/race_info/
-URL = 'https://www.nankankeiba.com/race_info/2020060120040101.do'
-BLANK_URL = 'https://www.nankankeiba.com/uma_info/2017100322.do'
-RACE_LIST_HELF_PERIOD = 'https://www.nankankeiba.com/calendar/202004.do'
 
 
 def url_to_soup(url):  # レース情報ページ取得

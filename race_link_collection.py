@@ -6,9 +6,7 @@ from bs4 import BeautifulSoup
 
 import crawler_settings # crawlerの設定ファイル
 
-HOME_URL = 'https://www.nankankeiba.com'
-RACE_PROGRAM_URL = 'https://www.nankankeiba.com/program/20200710200605.do'
-RACE_LIST_HELF_PERIOD = 'https://www.nankankeiba.com/calendar/202004.do'
+HOME_URL = crawler_settings.HOME_URL
 CALENDER_URL = crawler_settings.CALENDER_URL
 MIN_DATE  = crawler_settings.MIN_DATE
 MAX_DATE = crawler_settings.MAX_DATE

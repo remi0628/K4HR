@@ -35,8 +35,8 @@ split_tr = lambda x: str(x).split('</tr>')
 
 
 def get_previous_race_row(soup):  # 競走馬詳細データから出走履歴取得
-    race_table = soup.find_all('table', class_='tb01 w100pr bg-over stripe al-center')[
-        2]  # 競走馬詳細データサイト内には表が3つ　その内3つめの出走履歴を取得
+    # 競走馬詳細データサイト内には表が3つ　その内3つめの出走履歴を取得
+    race_table = soup.find_all('table', class_='tb01 w100pr bg-over stripe al-center')[2]
     return [tag_to_text(x) for x in split_tr(race_table)]
 
 
@@ -96,15 +96,15 @@ def create_data_frame(url):  # データフレーム作成
         # horse_data_csv(blank_link_list[i], race_date, i, f"data/race/{race_date}-{race_number}-{race_len}-{condition}-{race_top}/")  理想
 
 
-def create_data(url):  # 半期分レースに出場した馬のCSVファイル作成
-    helf_piriod_race_list = horse_race_list(url)
+def create_data():  # 半期分レースに出場した馬のCSVファイル作成
+    helf_piriod_race_list = horse_race_list()
     for i in range(len(helf_piriod_race_list)):  # 半期全レースページを渡す
         create_data_frame(helf_piriod_race_list[i])
     print('レースデータを{}個保存しました。'.format(len(helf_piriod_race_list)))
 
 
 def main():
-    create_data(RACE_LIST_HELF_PERIOD)
+    create_data()
 
 
 if __name__ == '__main__':

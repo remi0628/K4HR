@@ -38,7 +38,7 @@ def race_list_day(race_program_url): #
     else:
         msg = 'Link acquisition completed.'
     race_num += len(race_list)
-    print('|{} | Race：{}  {}'.format(race_day, len(race_list), msg))
+    print('|{} | Race：{:2}  {}'.format(race_day, len(race_list), msg))
     return race_list
 
 
@@ -70,6 +70,8 @@ def race_half_program_list(race_half_period_calendar_url): #
         half_period = "前期(4～9月)"
     elif race_day.month in (1, 2, 3, 10, 11, 12):
         half_period = "後期(10～3月)"
+    if race_day.month in (1, 2, 3):
+        race_day = datetime.date(year=int(race_day.year)-1, month=int(race_day.month), day=int(race_day.day))
     print("{}年レース年間開催日程 {}から{}日分のリンクを取得しました。{}{}\n".format( race_day.year, half_period, str(len(race_program_list)), msg2, msg))
     return race_program_list
 
@@ -85,37 +87,58 @@ def give_date(race_program_url):
 
 
 # [in]年間開催日程url　　[out] 全レースurl
-def horse_race_list(race_list_helf_period):
+def half_horse_race_list(race_list_helf_period):
     race_day_list = []
     race_program_url_list = race_half_program_list(race_list_helf_period) # 年間開催ページ(半期)を渡す
     for i in  range(len(race_program_url_list)): # 一日の出走表ページを渡す
         race_day_list.append(race_list_day(race_program_url_list[i]))         # [[url,url,url][url,url,url]...] 2次元配列
-    print('合計{}レースのリンクを取得しました。'.format(race_num))
+    print('現在合計{}レースのリンクを取得しました。'.format(race_num))
+    print('----------------------------------------------------------------------------')
     return list(itertools.chain.from_iterable(race_day_list))                        # 2次元リストを1次元リストに平坦化
 
 
 # 指定の日によって対応した半期のurlをリストに入れる
 def half_year_calc():
     calendar_list = []
+    calendar_msg = []
     year_interval = int(MAX_DATE.year) - int(MIN_DATE.year) + 1 # 何年分あるのか計算
     year = int(MIN_DATE.year)
-    print(year_interval)
+    if MIN_DATE.month in (1, 2, 3) and year_interval != 1:
+        year_interval += 1
+        year -= 1
+        if MAX_DATE.month in (1, 2, 3):
+            year_interval -= 1
+    elif  MIN_DATE.month in (1, 2, 3) and year_interval == 1 and MAX_DATE.month not in (1, 2, 3):
+            year_interval += 1
+            year -= 1
     for i in range(year_interval): # 年数分だけloop
+        # 前期判定
         if i == 0:
             month = month_calc(MIN_DATE.month)
         else:
             month = '04'
         calendar_list.append(CALENDER_URL + str(year) + month + '.do')
+        calendar_msg.append(str(year) + month_half_calc(month))
         # 後期表示判定
         max_month = month_calc(MAX_DATE.month)
-        if i == 0 and month == '04':
+        if i == 0 and month == '04' and year_interval == 1 and max_month == '04':
+            msg = '半期のみ取得。'
+        elif i == 0 and month == '04':
             calendar_list.append(CALENDER_URL + str(year) + '10' + '.do')
+            calendar_msg.append(str(year) + month_half_calc('10'))
         elif i != 0 and  i != (year_interval - 1):
             calendar_list.append(CALENDER_URL + str(year) + '10' + '.do')
+            calendar_msg.append(str(year) + month_half_calc('10'))
         elif i != 0 and month != max_month:
             calendar_list.append(CALENDER_URL + str(year) + max_month + '.do')
+            calendar_msg.append(str(year) + month_half_calc(max_month))
         year += 1
-    print(calendar_list)
+    print('----------------------------------------------------------------------------')
+    print('--- データの取得期間 ---')
+    print('※前期 4月～9月, 後期 10月～3月')
+    [print(cld_msg) for cld_msg in calendar_msg]
+    print('----------------------------------------------------------------------------')
+    return calendar_list
 
 # 上半期か下半期か判定
 def month_calc(month):
@@ -125,10 +148,27 @@ def month_calc(month):
         result_month = '10'
     return result_month
 
+def month_half_calc(month):
+    if month == '04':
+        half = '年：前期'
+    if month == '10':
+        half = '年：後期'
+    return half
+
+
+def horse_race_list():
+    race_day_list = []
+    calendar_list = half_year_calc()
+    print('--- 半期毎にリンク取得 ---')
+    print('----------------------------------------------------------------------------')
+    for i in  range(len(calendar_list)):
+        race_day_list.append(half_horse_race_list(calendar_list[i]))
+    return list(itertools.chain.from_iterable(race_day_list)) # # 2次元リストを1次元リストに平坦化
+
 
 def main():
-    #print(horse_race_list(RACE_LIST_HELF_PERIOD))
-    half_year_calc()
+    horse_race_list()
+    #half_year_calc()
 
 
 if __name__ == '__main__':

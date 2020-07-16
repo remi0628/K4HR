@@ -1,7 +1,7 @@
 import datetime
 
 # 値
-MIN_DATE = datetime.date(year=2020, month=3, day=1)
+MIN_DATE = datetime.date(year=2020, month=3, day=3)
 MAX_DATE = datetime.date(year=2020, month=3, day=10)
 
 # Link

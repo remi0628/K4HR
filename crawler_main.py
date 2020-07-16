@@ -14,6 +14,7 @@ from race_link_collection import horse_race_list  # 半期開催日程URLを渡�
 CSV_DATA_PATH = crawler_settings.CSV_DATA_PATH
 HOME_URL = crawler_settings.HOME_URL
 URL = 'https://www.nankankeiba.com/race_info/2020040119010101.do'
+condition = ''
 
 def url_to_soup(url):  # レース情報ページ取得
     req = requests.get(url)
@@ -61,12 +62,16 @@ def blank_race_day_calc(blank_race_data): # 出走履歴何番目を取得する
 
 # 当日データ取得
 def result_data(url):  # レース結果取得 return[1着馬, 土の状態, レースの長さ, レース日]
+    global condition
     con = ''
     result_url = url[0:28] + 'result' + url[-20:]
     soup = url_to_soup(result_url)
     race_number = soup.find(id="race-data01-b")
     race_number = race_number.find('img').get('alt')[:2] # レース番号
-    condition = str(soup.find(id="race-data02").contents[4][-4:-2].strip('　')) # 土の状態
+    condition_txt = str(soup.find(id="race-data02").contents[4][-4:-2].strip('　')) # 土の状態
+    if condition_txt not in ('良', '不良', '重', '稍重'): # これ以外の文字が入っている場合は前回の状態に合わせる
+        condition_txt = condition
+    condition = condition_txt
     race_len = int(soup.find(id="race-data01-a").get_text().replace('\n', '').split('　')[3].replace(',', '')[1:5].replace("m",""))  # レースの長さ
     race_top = soup.find('tr', class_='bg-1chaku').contents[5].string  # 1位
     race_date = race_day(soup)  # レース日付

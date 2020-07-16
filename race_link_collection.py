@@ -109,6 +109,8 @@ def half_year_calc():
     elif  MIN_DATE.month in (1, 2, 3) and year_interval == 1 and MAX_DATE.month not in (1, 2, 3):
             year_interval += 1
             year -= 1
+    elif  MIN_DATE.month in (1, 2, 3) and year_interval == 1 and MAX_DATE.month in (1, 2, 3):
+            year -= 1
     for i in range(year_interval): # 年数分だけloop
         # 前期判定
         if i == 0:
@@ -133,6 +135,7 @@ def half_year_calc():
         year += 1
     print('----------------------------------------------------------------------------')
     print('--- データの取得期間 ---')
+    print('----------------------------------------------------------------------------')
     print('※前期 4月～9月, 後期 10月～3月')
     [print(cld_msg) for cld_msg in calendar_msg]
     print('----------------------------------------------------------------------------')

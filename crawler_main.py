@@ -13,7 +13,7 @@ from race_link_collection import horse_race_list  # 半期開催日程URLを渡�
 #### https://www.nankankeiba.com/race_info/
 CSV_DATA_PATH = crawler_settings.CSV_DATA_PATH
 HOME_URL = crawler_settings.HOME_URL
-
+URL = 'https://www.nankankeiba.com/race_info/2020040119010101.do'
 
 def url_to_soup(url):  # レース情報ページ取得
     req = requests.get(url)
@@ -61,14 +61,16 @@ def blank_race_day_calc(blank_race_data): # 出走履歴何番目を取得する
 
 # 当日データ取得
 def result_data(url):  # レース結果取得 return[1着馬, 土の状態, レースの長さ, レース日]
+    con = ''
     result_url = url[0:28] + 'result' + url[-20:]
-    print(result_url)
     soup = url_to_soup(result_url)
-    condition = soup.find(id="race-data02").get_text().replace('\n', '').split('　')[2][0:1]  # 土の状態
+    race_number = soup.find(id="race-data01-b")
+    race_number = race_number.find('img').get('alt')[:2] # レース番号
+    condition = str(soup.find(id="race-data02").contents[4][-4:-2].strip('　')) # 土の状態
     race_len = int(soup.find(id="race-data01-a").get_text().replace('\n', '').split('　')[3].replace(',', '')[1:5].replace("m",""))  # レースの長さ
     race_top = soup.find('tr', class_='bg-1chaku').contents[5].string  # 1位
     race_date = race_day(soup)  # レース日付
-    return race_top, condition, race_len, race_date
+    return race_top, condition, race_len, race_date, race_number
 
 
 # レース日取得
@@ -82,19 +84,21 @@ def race_day(soup):  # レース日 datetimeオブジェクトに変換 return d
 
 def create_data_frame(url):  # データフレーム作成
     try:
-        race_top, condition, race_len, race_date = result_data(url)  # レース当日データ取得
+        race_top, condition, race_len, race_date, race_number = result_data(url)  # レース当日データ取得
         # race_top, condition, race_len, race_date, race_number = result_data(url)  理想
     except:
         return 1
-    print('#レース当日データ#\n', '日付：{}, レース距離：{}, 土の状態：{}, 1位馬番：{}'.format(race_date, race_len, condition, race_top))
+    print( '|{} | R：{:2} | レース距離：{:4} | 1位馬番：{:2} | 土の状態：{:2} '.format(race_date, race_number, race_len, race_top, condition))
     blank_link_list = horse_page_link(url)
     for i in range(len(blank_link_list)):
-        horse_data_csv(blank_link_list[i], race_date, i, f"data/race/{race_date}-{race_len}-{condition}-{race_top}/")
+        horse_data_csv(blank_link_list[i], race_date, i, f"data/race/{race_date}-{race_number}-{race_len}-{condition}-{race_top}/")
         # horse_data_csv(blank_link_list[i], race_date, i, f"data/race/{race_date}-{race_number}-{race_len}-{condition}-{race_top}/")  理想
 
 
 def create_data():  # 半期分レースに出場した馬のCSVファイル作成
     helf_piriod_race_list = horse_race_list()
+    print('--- 各レースに出場している馬(過去レースデータ)をcsvに記録します。 ---')
+    print('----------------------------------------------------------------------------')
     for i in range(len(helf_piriod_race_list)):  # 半期全レースページを渡す
         create_data_frame(helf_piriod_race_list[i])
     print('レースデータを{}個保存しました。'.format(len(helf_piriod_race_list)))

@@ -13,15 +13,15 @@ def read_csv():
     X = []
     Y = []
     for race in races:
-        year, month, day, roundNumber, length, roadState, top = os.path.basename(race).split("-")
+        year, month, day, roundNumber, length, roadState, top = os.path.basename(race).split("-") # raceファイル名から情報を取得
         Y.append(int(top) - 1)
         print(os.path.basename(race))
-        horses = glob.glob(race + "/*.csv")
-        horses = sorted(horses, key=lambda x: int(re.findall("\d+", os.path.basename(x))[0]))
+        horses = glob.glob(race + "/*.csv") # ファイル内全csvファイルpath取得
+        horses = sorted(horses, key=lambda x: int(re.findall("\d+", os.path.basename(x))[0])) # 馬番号順にソート
         race_horse = []
         for i in range(16):
             if len(horses) > i:
-                df = pd.read_csv(horses[i], encoding="SHIFT-JIS")
+                df = pd.read_csv(horses[i], encoding="SHIFT-JIS") # カンマ区切りのデータを読み込むのでread_csv
                 df, check = make_race_data(df, 10)
 
                 race_horse.append(df[:10].values)
@@ -46,6 +46,7 @@ def inZeroOne(num):
 
 
 def make_race_data(df, l=10):
+    # ゼロ埋めのpandasデータフレーム作成 (rows=1, columns=16)
     df_ = pd.DataFrame(np.zeros((1, 16)), columns=["horse_cnt", "money", "result_rank", "len", "popularity", "weight",
                                                    "sec", "place_Urawa", "place_Funabashi", "place_Ooi",
                                                    "place_Kawasaki", "place_other", "soil_heavy",
@@ -53,9 +54,9 @@ def make_race_data(df, l=10):
     weightLog = 0
     dropList = []
     check = False
-    for idx, row in df.iterrows():
+    for idx, row in df.iterrows(): # 1行ずつ取り出す
         check = True
-        if str(row['着順']) == "nan" or str(row['人気']) == "nan":
+        if str(row['着順']) == "nan" or str(row['人気']) == "nan": # nonの場合0
             dropList.append(idx)
             df_.loc[idx] = 0
             continue

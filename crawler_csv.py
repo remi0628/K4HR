@@ -17,6 +17,7 @@ def horse_data_csv(url, date=datetime.date.today(), number=0, dir=None):
     tab = soup.find_all('table', class_='tb01 w100pr bg-over stripe al-center')[2]
     pdList = []
     rows = tab.find_all("tr")
+
     for i, row in enumerate(rows):
         if i == 0:
             continue
@@ -30,7 +31,7 @@ def horse_data_csv(url, date=datetime.date.today(), number=0, dir=None):
                     y += 2000
                 else:
                     y += 1900
-                if datetime.date(y, m, d) >= date:
+                if datetime.date(y, m, d) > date:
                     break
             if j == 3 or j == 14 or j == 16:
                 try:
@@ -53,6 +54,7 @@ def horse_data_csv(url, date=datetime.date.today(), number=0, dir=None):
         number=str(number+1)
         df.to_csv(dir + number + horse_name + horse_birth + ".csv", encoding="SHIFT-JIS")
 
+
     return df
 
 
@@ -60,8 +62,8 @@ def main():
     BLANK_URL = 'https://www.nankankeiba.com/uma_info/2017102763.do'
 
     day = datetime.date(2019, 11, 9)
-    df, _, _ = horse_data_csv(BLANK_URL, day)
-    print(df[:])
+    df = horse_data_csv(BLANK_URL, day)
+    print(df)
 
 
 if __name__ == '__main__':

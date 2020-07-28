@@ -37,13 +37,11 @@ def inZeroOne(num):
     else:
         return num
 
-
 def make_race_data(df, l=10):
     # ゼロ埋めのpandasデータフレーム作成 (rows=1, columns=16)
-    df_ = pd.DataFrame(np.zeros((1, 16)), columns=["horse_cnt", "money", "result_rank", "len", "popularity", "weight",
-                                                   "sec", "place_Urawa", "place_Funabashi", "place_Ooi",
-                                                   "place_Kawasaki", "place_other", "soil_heavy",
-                                                   "soil_s_heavy", "soil_good", "soil_bad"])
+    df_ = pd.DataFrame(np.zeros((1, 12)), columns=["horse_cnt", "result_rank", "racecourse", "len", "weather", "soil_condition",
+                                                    "popularity", "weight", "sec", "difference", "3_halong", "money"])
+
     weightLog = 0
     dropList = []
     check = False
@@ -56,10 +54,26 @@ def make_race_data(df, l=10):
 
         try:
             # 馬場状態
-            df_.loc[idx, 'soil_heavy'] = 1 if row['天候馬場'][-2:] == '/重' else 0
-            df_.loc[idx, 'soil_s_heavy'] = 1 if row['天候馬場'][-2:] == '稍重' else 0
-            df_.loc[idx, 'soil_good'] = 1 if row['天候馬場'][-2:] == '/良' else 0
-            df_.loc[idx, 'soil_bad'] = 1 if row['天候馬場'][-2:] == '不良' else 0
+            if row['天候馬場'][-2:] == '/良':
+                df_.loc[idx, 'soil_condition'] = 1
+            elif row['天候馬場'][-2:] == '/重':
+                df_.loc[idx, 'soil_condition'] = 2
+            elif row['天候馬場'][-2:] == '稍重':
+                df_.loc[idx, 'soil_condition'] = 3
+            elif row['天候馬場'][-2:] == '不良':
+                df_.loc[idx, 'soil_condition'] = 4
+            else:
+                df_.loc[idx, 'soil_condition'] = 0
+
+            # 天気
+            if row['天候馬場'][0] == '晴':
+                df_.loc[idx, 'weather'] = 1
+            elif row['天候馬場'][0] == '曇':
+                df_.loc[idx, 'weather'] = 2
+            elif row['天候馬場'][0] == '雨':
+                df_.loc[idx, 'weather'] = 3
+            else:
+                df_.loc[idx, 'weather'] = 0
 
             df_.loc[idx, 'money'] = inZeroOne(float(str(row['獲得賞金（円）']).replace(',', '')) / 100000000)
             df_.loc[idx, 'horse_cnt'] = float(str(row['着順']).split('/')[1])
@@ -78,16 +92,30 @@ def make_race_data(df, l=10):
                 weightLog = (float(row['体重']))
 
             # 　競馬場
-            df_.loc[idx, 'place_Urawa'] = 1 if row['競馬場'][:2] == "浦和" else 0
-            df_.loc[idx, 'place_Funabashi'] = 1 if row['競馬場'][:2] == "船橋" else 0
-            df_.loc[idx, 'place_Ooi'] = 1 if row['競馬場'][:2] == "大井" else 0
-            df_.loc[idx, 'place_Kawasaki'] = 1 if row['競馬場'][:2] == "川崎" else 0
-
-            if df_.loc[idx, 'place_Urawa'] + df_.loc[idx, 'place_Funabashi'] + df_.loc[idx, 'place_Ooi'] + df_.loc[
-                idx, 'place_Kawasaki'] == 0:
-                df_.loc[idx, 'place_other'] = 1
+            if row['競馬場'][:2] == "浦和":
+                df_.loc[idx, 'racecourse'] = 1
+            elif row['競馬場'][:2] == "船橋":
+                df_.loc[idx, 'racecourse'] = 2
+            elif row['競馬場'][:2] == "大井":
+                df_.loc[idx, 'racecourse'] = 3
+            elif row['競馬場'][:2] == "川崎":
+                df_.loc[idx, 'racecourse'] = 4
             else:
-                df_.loc[idx, 'place_other'] = 0
+                df_.loc[idx, 'racecourse'] = 0
+
+            # 差/事故
+            try:
+                df_.loc[idx, 'difference'] = float(row['差/事故'])
+            except:
+                df_.loc[idx, 'difference'] = 0
+
+            # 上3F（3ハロン）
+            try:
+                df_.loc[idx, '3_halong'] = float(row['上3F'])
+            except:
+                df_.loc[idx, '3_halong'] = 0
+
+            print(row['コーナー通過順'])
 
             # タイム(秒)
             try:

@@ -71,11 +71,7 @@ def result_data_refund(url, dir=None):
         for cell in row.findAll(['td', 'th']):
             if count >= 24 and 41 >= count or count >= 45 and 47 >= count or count >= 63 and 65 >= count:
                 if cell.get_text() != '-':
-                    try:
-                        int(cell.get_text())
-                        csvRow2.append(cell.get_text().strip('円').replace('\n', ''))
-                    except ValueError:
-                        csvRow.append(0)
+                    csvRow.append(cell.get_text().strip('円').replace('\n', ''))
                 else:
                     csvRow.append(0)
             count += 1
@@ -91,11 +87,7 @@ def result_data_refund(url, dir=None):
         for cell in row.findAll(['td', 'th']):
             if count >= 14 and 25 >= count or count >= 32 and 34 >= count:
                 if cell.get_text() != '-':
-                    try:
-                        int(cell.get_text())
-                        csvRow2.append(cell.get_text().strip('円').replace('\n', ''))
-                    except ValueError:
-                        csvRow.append(0)
+                    csvRow2.append(cell.get_text().strip('円').replace('\n', ''))
                 else:
                     csvRow.append(0)
             count += 1
@@ -119,13 +111,14 @@ def result_data_refund(url, dir=None):
         df.to_csv(dir +"refund" + ".csv", encoding="SHIFT-JIS")
 
 
-
 def main():
+    result_data_refund("https://www.nankankeiba.com/race_info/2019040121010101.do", f"data/")
+    """
     BLANK_URL = 'https://www.nankankeiba.com/uma_info/2017102763.do'
-
     day = datetime.date(2019, 11, 9)
     df = horse_data_csv(BLANK_URL, day)
     print(df)
+    """
 
 
 if __name__ == '__main__':

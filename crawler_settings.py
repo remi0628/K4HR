@@ -1,8 +1,11 @@
 import datetime
 
-# 値
-MIN_DATE = datetime.date(year=2020, month=6, day=10)
-MAX_DATE = datetime.date(year=2020, month=7, day=10)
+# crawlerを回す範囲
+MIN_DATE = datetime.date(year=2020, month=1, day=3)
+MAX_DATE = datetime.date(year=2020, month=1, day=4)
+
+# craler並列化した際のパワーをどのくらい使用するか
+MAX_THREAD = 4
 
 # Link
 CSV_DATA_PATH = 'data/horse_blank_data/'

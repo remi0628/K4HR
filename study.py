@@ -4,8 +4,13 @@ from tensorflow.keras.layers import *
 import datetime
 from sklearn.model_selection import train_test_split
 
-X = np.load("data/X2000-04-01-2020-04-01.npy")
-Y = np.load("data/Y2000-04-01-2020-04-01.npy")
+### remi ### メモリの開放を制限する
+gpu_options = tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=0.7)
+sess = tf.compat.v1.Session(config=tf.compat.v1.ConfigProto(gpu_options=gpu_options))
+### remi ###
+
+X = np.load("data/X.npy")
+Y = np.load("data/Y.npy")
 x_train, x_test, y_train, y_test = train_test_split(X, Y, random_state=42, train_size=0.9)
 
 

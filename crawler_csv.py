@@ -71,7 +71,11 @@ def result_data_refund(url, dir=None):
         for cell in row.findAll(['td', 'th']):
             if count >= 24 and 41 >= count or count >= 45 and 47 >= count or count >= 63 and 65 >= count:
                 if cell.get_text() != '-':
-                    csvRow.append(cell.get_text().strip('円').replace('\n', ''))
+                    try:
+                        int(cell.get_text())
+                        csvRow2.append(cell.get_text().strip('円').replace('\n', ''))
+                    except ValueError:
+                        csvRow.append(0)
                 else:
                     csvRow.append(0)
             count += 1
@@ -87,7 +91,11 @@ def result_data_refund(url, dir=None):
         for cell in row.findAll(['td', 'th']):
             if count >= 14 and 25 >= count or count >= 32 and 34 >= count:
                 if cell.get_text() != '-':
-                    csvRow2.append(cell.get_text().strip('円').replace('\n', ''))
+                    try:
+                        int(cell.get_text())
+                        csvRow2.append(cell.get_text().strip('円').replace('\n', ''))
+                    except ValueError:
+                        csvRow.append(0)
                 else:
                     csvRow.append(0)
             count += 1

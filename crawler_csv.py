@@ -1,5 +1,4 @@
 import os
-
 import requests
 from bs4 import BeautifulSoup
 import datetime
@@ -54,8 +53,63 @@ def horse_data_csv(url, date=datetime.date.today(), number=0, dir=None):
         number=str(number+1)
         df.to_csv(dir + number + horse_name + horse_birth + ".csv", encoding="SHIFT-JIS")
 
-
     return df
+
+
+# 当日データ（払戻金）
+def result_data_refund(url, dir=None):
+    pdList = []
+    csvRow = []
+    csvRow2 = []
+    count = 0
+    result_url = url[0:28] + 'result' + url[-20:]
+    soup = BeautifulSoup(requests.get(result_url).content, 'html.parser')
+    # 払戻金テーブル一つ目
+    table = soup.find_all('table', class_='tb01 w100pr bg-over')[-2]
+    rows = table.find_all("tr")
+    for row in rows:
+        for cell in row.findAll(['td', 'th']):
+            if count >= 24 and 41 >= count or count >= 45 and 47 >= count or count >= 63 and 65 >= count:
+                if cell.get_text() != '-':
+                    csvRow.append(cell.get_text().strip('円').replace('\n', ''))
+                else:
+                    csvRow.append(0)
+            count += 1
+    if len(csvRow) != 24: # 複勝が1, 2枠しかない場合
+        i = 24 - len(csvRow)
+        for add in range(i):
+            csvRow.append(0)
+    # 払戻金テーブル二つ目
+    count = 0
+    table = soup.find_all('table', class_='tb01 w100pr bg-over')[-1]
+    rows = table.find_all("tr")
+    for row in rows:
+        for cell in row.findAll(['td', 'th']):
+            if count >= 14 and 25 >= count or count >= 32 and 34 >= count:
+                if cell.get_text() != '-':
+                    csvRow2.append(cell.get_text().strip('円').replace('\n', ''))
+                else:
+                    csvRow.append(0)
+            count += 1
+    if len(csvRow2) != 15: # ワイドが1, 2枠しかない場合（実際あるか分からない）
+        i = 15 - len(csvRow2)
+        for add in range(i):
+            csvRow.append(0)
+    # データ結合
+    csvRow += csvRow2
+    pdList.append(csvRow)
+    # dfへ整えてからcsv保存
+    df = pd.DataFrame(pdList, index=[0], columns=['単勝_組番', '単勝_金額', '単勝_人気', '複勝_組番', '複勝_金額', '複勝_人気',
+                                                             '枠複_組番', '枠複_金額', '枠複_人気', '普通馬腹_組番', '普通馬腹_金額', '普通馬腹_人気',
+                                                             '枠単_組番', '枠単_金額', '枠単_人気', '馬単_組番', '馬単_金額', '馬単_人気',
+                                                             '複勝2_組番', '複勝2_金額', '複勝2_人気', '複勝3_組番', '複勝3_金額', '複勝3_人気',
+                                                             'ワイド_組番', 'ワイド_金額', 'ワイド_人気', '三連複_組番', '三連複_金額', '三連複_人気',
+                                                             '三連単_組番', '三連単_金額', '三連単_人気', 'ワイド2_組番', 'ワイド2_金額', 'ワイド2_人気',
+                                                             'ワイド3_組番', 'ワイド3_金額', 'ワイド3_人気',])
+    if dir:
+        os.makedirs(dir, exist_ok=True)
+        df.to_csv(dir +"refund" + ".csv", encoding="SHIFT-JIS")
+
 
 
 def main():

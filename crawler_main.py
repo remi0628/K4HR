@@ -1,3 +1,4 @@
+import os
 import re
 import datetime
 import requests
@@ -10,12 +11,13 @@ import traceback
 
 import crawler_settings  # crawlerの設定ファイル
 from crawler_csv import horse_data_csv  # 馬の詳細URL渡してcsvファイル作成
+from crawler_csv import result_data_refund # 各レース毎に払戻金をcsvにまとめる
 from race_link_collection import horse_race_list  # 半期開催日程URLを渡すと半期分のレースURLを返す
 
 #### https://www.nankankeiba.com/race_info/
 CSV_DATA_PATH = crawler_settings.CSV_DATA_PATH
 HOME_URL = crawler_settings.HOME_URL
-URL = 'https://www.nankankeiba.com/race_info/2020040119010101.do'
+MAX_THREAD = crawler_settings.MAX_THREAD
 condition = ''
 
 
@@ -42,28 +44,6 @@ def get_previous_race_row(soup):  # 競走馬詳細データから出走履歴�
     # 競走馬詳細データサイト内には表が3つ　その内3つめの出走履歴を取得
     race_table = soup.find_all('table', class_='tb01 w100pr bg-over stripe al-center')[2]
     return [tag_to_text(x) for x in split_tr(race_table)]
-
-
-'''
-def horse_data(url): # 出走履歴からデータ作成
-    soup = url_to_soup(url)
-    blank_race_data = get_previous_race_row(soup) # 過去のレースデータ
-    # print('出走履歴1番目の日付：', re.split('[<>]' ,blank_race_data[1:2][0][2])[2])
-    # print(len(blank_race_data))
-    #blank_race_day_calc(blank_race_data)
-    #print(re.split('[<>]' ,blank_race_data))
-    df =  pd.DataFrame(blank_race_data)[1:][[2,3,10,11,13,14,15,19,23]].dropna().rename(columns={
-        2:'date', 3:'place', 10:'len', 11:'wether', 13:'popularity', 14:'rank', 15:'time',19:'weight',23:'money'})
-    return df
-
-def blank_race_day_calc(blank_race_data): # 出走履歴何番目を取得するかレース当日と日付計算判定
-    data_len = blank_race_data[1:] # len(data_len)-1 : 出走履歴数
-    for i in range((len(data_len)-1)):
-        day = re.split('[<>]' ,data_len[i][2])[2].split('/')
-        year = '20' + day[0]
-        race_day = datetime.date(year=int(year), month=int(day[1]), day=int(day[2])) # datetime.datetimeオブジェクト y-m-d
-        print(race_day)
-'''
 
 
 # 当日データ取得
@@ -108,12 +88,12 @@ def create_data_frame(url):  # データフレーム作成
     except:
         traceback.print_exc()
         return 1
-    print('|{} | R：{:2} | レース距離：{:4} | 1位馬番：{:2} | 土の状態：{:2} '.format(race_date, race_number, race_len, race_top,
-                                                                      condition))
+    print('|{} | R：{:2} | レース距離：{:4} | 1位馬番：{:2} | 土の状態：{:2} '.format(race_date, race_number, race_len, race_top, condition))
+    dir = (f"data/race/{race_date}-{race_number}-{race_len}-{condition}-{race_top}/") # csv保存先ディレクトリ
+    result_data_refund(url, dir) # 払戻金
     blank_link_list = horse_page_link(url)
     for i in range(len(blank_link_list)):
-        horse_data_csv(blank_link_list[i], race_date, i,
-                       f"data/race/{race_date}-{race_number}-{race_len}-{condition}-{race_top}/")
+        horse_data_csv(blank_link_list[i], race_date, i, dir)
         # horse_data_csv(blank_link_list[i], race_date, i, f"data/race/{race_date}-{race_number}-{race_len}-{condition}-{race_top}/")  理想
 
 
@@ -127,14 +107,14 @@ def create_data():  # 半期分レースに出場した馬のCSVファイル作�
     print('レースデータを{}個保存しました。'.format(len(helf_piriod_race_list)))
     print("レースデータ取得処理時間 ：", time.time() - now)
 
-
-def create_data_Thread(max_thread=4):  # 半期分レースに出場した馬のCSVファイル作成
+# 並列化 (使うパワー設定は他に作業するのであれば4が良さげ)
+def create_data_Thread(MAX_THREAD):  # 半期分レースに出場した馬のCSVファイル作成
     helf_piriod_race_list = horse_race_list()
     print('--- 各レースに出場している馬(過去レースデータ)をcsvに記録します。 ---')
     print('----------------------------------------------------------------------------')
     now = time.time()
     future_list = []
-    with futures.ProcessPoolExecutor(max_workers=max_thread) as executor:
+    with futures.ProcessPoolExecutor(max_workers=MAX_THREAD) as executor:
         for i in range(len(helf_piriod_race_list)):
             future = executor.submit(fn=create_data_frame, url=helf_piriod_race_list[i])
             future_list.append(future)
@@ -145,8 +125,9 @@ def create_data_Thread(max_thread=4):  # 半期分レースに出場した馬の
 
 
 def main():
-    create_data_Thread(None)
-    # create_data()
+    #result_data_refund("https://www.nankankeiba.com/race_info/2020010221120201.do", f"data/")
+    create_data_Thread(MAX_THREAD)
+    #create_data()
 
 
 if __name__ == '__main__':

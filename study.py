@@ -10,7 +10,9 @@ sess = tf.compat.v1.Session(config=tf.compat.v1.ConfigProto(gpu_options=gpu_opti
 ### remi ###
 
 X = np.load("data/X.npy")
-Y = np.load("data/Y.npy")
+ranking= np.load("data/Y.npy")
+Y = ranking[:, 0] - 1  # 一位のみ取得
+
 x_train, x_test, y_train, y_test = train_test_split(X, Y, random_state=42, train_size=0.9)
 
 

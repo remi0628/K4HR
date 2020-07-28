@@ -16,41 +16,46 @@ def read_csv(race, date):
     horses = sorted(horses, key=lambda x: int(re.findall("\d+", os.path.basename(x))[0]))
 
     race_horse = []
+    rankings = np.zeros(16)
     for i in range(16):
         if len(horses) > i:
 
             birth = [int(x) for x in re.findall("\d+", horses[i])[-3:]]
-            df = pd.read_csv(horses[i], encoding="SHIFT-JIS")
-            df, check = make_race_data(df, date, birth, 10)
+            df = pd.read_csv(horses[i], encoding="cp932")
+            df, ranking = make_race_data(df, date, birth, 10)
+
+            if ranking != 0:  # 欠場等でないなら
+                if rankings[ranking - 1] == 0:  # 同着の場合来た順に次に、本来払い戻し等どう処理されるか調べる必要性あり
+                    rankings[ranking - 1] = int(re.findall("\d+", os.path.basename(horses[i]))[0])
+                else:
+                    rankings[ranking] = int(re.findall("\d+", os.path.basename(horses[i]))[0])
 
             race_horse.append(df[:10].values)
         else:
             race_horse.append(np.zeros((10, 20)))
-    return race_horse
+
+    return race_horse, rankings
 
 
 def make_npy():
-    global SAJIGO
     races = glob.glob("data/race/*")
 
-    Y = []
     future_list = []
-    # 並列化
     with futures.ProcessPoolExecutor(max_workers=None) as executor:
         for i in range(len(races)):
             year, month, day, roundNumber, length, roadState, top = os.path.basename(races[i]).split("-")
-            Y.append(int(top) - 1)
-            future = executor.submit(fn=read_csv, race=races[i], date=[year, month, day]) # 予約
+            future = executor.submit(fn=read_csv, race=races[i], date=[year, month, day])
             future_list.append(future)
         _ = futures.as_completed(fs=future_list)
 
-    X = [future.result() for future in future_list]
+    X = [future.result()[0] for future in future_list]
+    Y = [future.result()[1] for future in future_list]
 
     X = np.array(X)
     Y = np.array(Y)
     X = X.astype("float")
-    np.save("data/X2000-04-01-2020-04-1.npy", X)
-    np.save("data/Y2000-04-01-2020-04-1.npy", Y)
+    np.save("data/X2010-01-01-2020-04-01.npy", X)
+    np.save("data/Y2010-01-01-2020-04-01.npy", Y)
 
 
 def inZeroOne(num):
@@ -63,7 +68,6 @@ def inZeroOne(num):
 
 
 def make_race_data(df, date, birth, l=10):
-    global maxSAJIGO
     df_ = pd.DataFrame(np.zeros((1, 20)), columns=["horse_cnt", "money", "result_rank", "len", "popularity", "weight",
                                                    "borden_weight", "sec", "diff_accident", "threeF", "birth_days",
                                                    "place_Urawa", "place_Funabashi",
@@ -72,6 +76,7 @@ def make_race_data(df, date, birth, l=10):
     weightLog = 0
     dropList = []
     check = False
+    ranking = 0
     for idx, row in df.iterrows():
         check = True
         if str(row['着順']) == "nan" or str(row['人気']) == "nan" or str(row['タイム']) == "nan":
@@ -141,11 +146,11 @@ def make_race_data(df, date, birth, l=10):
             elif raceDay[0] < 1900:
                 raceDay[0] += 1900
 
-            # 馬が生まれてから何日経ったか
             birthDate = datetime.date(raceDay[0], raceDay[1], raceDay[2]) - datetime.date(birth[0], birth[1], birth[2])
             df_.loc[idx, 'birth_days'] = inZeroOne((birthDate.days - 700) / 1000)
 
             if raceDay == date:  # 当日の場合不明なもの
+                ranking = int(row['着順'].split('/')[0])
                 df_.loc[idx, 'money'] = 0
                 df_.loc[idx, 'result_rank'] = 0
                 df_.loc[idx, 'popularity'] = 0
@@ -159,22 +164,16 @@ def make_race_data(df, date, birth, l=10):
             dropList.append(idx)
             df_.loc[idx] = 0
 
-    # ドロップ
     for i in dropList:
         df_.drop(i, axis=0, inplace=True)
     if not check:
         df_.drop(0, axis=0, inplace=True)
 
-    leng = len(df_)
-    if leng == 0:
-        check = False
-    else:
-        check = True
 
     while len(df_) < l:
         df_.loc[len(df_) + len(dropList)] = 0
 
-    return df_, check
+    return df_, ranking
 
 
 def main():

@@ -19,7 +19,7 @@ def read_csv():
         race_horse = []
         for i in range(16): # 馬番が多くても16まで
             if len(horses) > i:
-                df = pd.read_csv(horses[i], encoding="SHIFT-JIS") # カンマ区切りのデータを読み込むのでread_csv
+                df = pd.read_csv(horses[i], encoding="cp932") # カンマ区切りのデータを読み込むのでread_csv
                 df, check = make_race_data(df, 10)
 
                 race_horse.append(df[:10].values)

@@ -51,7 +51,8 @@ def horse_data_csv(url, date=datetime.date.today(), number=0, dir=None):
     if dir:
         os.makedirs(dir, exist_ok=True)
         number=str(number+1)
-        df.to_csv(dir + number + horse_name + horse_birth + ".csv", encoding="SHIFT-JIS")
+        with open(dir + number + horse_name + horse_birth + ".csv", mode="w", encoding="cp932", newline="", errors="ignore") as f:
+            df.to_csv(f)
 
     return df
 
@@ -108,7 +109,8 @@ def result_data_refund(url, dir=None):
                                                              'ワイド3_組番', 'ワイド3_金額', 'ワイド3_人気',])
     if dir:
         os.makedirs(dir, exist_ok=True)
-        df.to_csv(dir +"refund" + ".csv", encoding="SHIFT-JIS")
+        with open(dir +"refund" + ".csv", mode="w", encoding="cp932", newline="", errors="ignore") as f:
+            df.to_csv(f)
 
 
 def main():

@@ -15,7 +15,7 @@ def read_csv():
         year, month, day, roundNumber, length, roadState, top = os.path.basename(race).split("-") # raceファイル名から情報を取得
         print(os.path.basename(race))
         horses = glob.glob(race + "/*.csv") # ファイル内全csvファイルpath取得
-        horses = sorted(horses, key=lambda x: int(re.findall("\d+", os.path.basename(x))[0])) # 馬番号順にソート
+        horses = sorted(horses[0:-1], key=lambda x: int(re.findall("\d+", os.path.basename(x))[0])) # 馬番号順にソート
         race_horse = []
         for i in range(16): # 馬番が多くても16まで
             if len(horses) > i:
@@ -39,8 +39,8 @@ def inZeroOne(num):
 
 def make_race_data(df, l=10):
     # ゼロ埋めのpandasデータフレーム作成 (rows=1, columns=16)
-    df_ = pd.DataFrame(np.zeros((1, 12)), columns=["horse_cnt", "result_rank", "racecourse", "len", "weather", "soil_condition",
-                                                    "popularity", "weight", "sec", "difference", "3_halong", "money"])
+    df_ = pd.DataFrame(np.zeros((1, 13)), columns=["horse_cnt", "result_rank", "racecourse", "len", "weather", "soil_condition",
+                                                    "popularity", "weight", "sec", "diff_accident", "threeF", "corner_order", "money"])
 
     weightLog = 0
     dropList = []
@@ -92,30 +92,34 @@ def make_race_data(df, l=10):
                 weightLog = (float(row['体重']))
 
             # 　競馬場
-            if row['競馬場'][:2] == "浦和":
+            if row['競馬場'][:2] == "浦和" or row['競馬場'][:2] == "浦和☆":
                 df_.loc[idx, 'racecourse'] = 1
-            elif row['競馬場'][:2] == "船橋":
+            elif row['競馬場'][:2] == "船橋" or row['競馬場'][:2] == "船橋☆":
                 df_.loc[idx, 'racecourse'] = 2
-            elif row['競馬場'][:2] == "大井":
+            elif row['競馬場'][:2] == "大井" or row['競馬場'][:2] == "大井☆":
                 df_.loc[idx, 'racecourse'] = 3
-            elif row['競馬場'][:2] == "川崎":
+            elif row['競馬場'][:2] == "川崎" or row['競馬場'][:2] == "川崎☆":
                 df_.loc[idx, 'racecourse'] = 4
             else:
                 df_.loc[idx, 'racecourse'] = 0
 
             # 差/事故
             try:
-                df_.loc[idx, 'difference'] = float(row['差/事故'])
+                df_.loc[idx, 'diff_accident'] = float(row['差/事故'])
             except:
-                df_.loc[idx, 'difference'] = 0
+                df_.loc[idx, 'diff_accident'] = 0
 
             # 上3F（3ハロン）
             try:
-                df_.loc[idx, '3_halong'] = float(row['上3F'])
+                df_.loc[idx, 'threeF'] = float(row['上3F'])
             except:
-                df_.loc[idx, '3_halong'] = 0
+                df_.loc[idx, 'threeF'] = 0
 
-            print(row['コーナー通過順'])
+            # コーナー通過順
+            try:
+                df_.loc[idx, 'corner_order'] = row['コーナー通過順']
+            except:
+                df_.loc[idx, 'corner_order'] = 0
 
             # タイム(秒)
             try:

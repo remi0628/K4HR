@@ -10,9 +10,11 @@ import traceback
 def read_csv():
     races = glob.glob("data/test_race/*")
 
-
+    X = []
+    Y = []
     for race in races:
         year, month, day, roundNumber, length, roadState, top = os.path.basename(race).split("-") # raceファイル名から情報を取得
+        Y.append(int(top) - 1)
         print(os.path.basename(race))
         horses = glob.glob(race + "/*.csv") # ファイル内全csvファイルpath取得
         horses = sorted(horses[0:-1], key=lambda x: int(re.findall("\d+", os.path.basename(x))[0])) # 馬番号順にソート
@@ -24,9 +26,13 @@ def read_csv():
                 race_horse.append(df[:10].values)
             else:
                 race_horse.append(np.zeros((10, 16)))
-        print(df.head())
-    print(df.count())
-
+            X.append(race_horse)
+    # 同じように保存する　後々分かりやすくする為
+    X = np.array(X)
+    Y = np.array(Y)
+    X = X.astype("float")
+    np.save("data/data_jupyter/X.npy", X)
+    np.save("data/data_jupyter/Y.npy", Y)
 
 def inZeroOne(num):
     if num > 1:

@@ -39,8 +39,8 @@ def inZeroOne(num):
 
 def make_race_data(df, l=10):
     # ゼロ埋めのpandasデータフレーム作成 (rows=1, columns=16)
-    df_ = pd.DataFrame(np.zeros((1, 13)), columns=["horse_cnt", "result_rank", "racecourse", "len", "weather", "soil_condition",
-                                                    "popularity", "weight", "sec", "diff_accident", "threeF", "corner_order", "money"])
+    df_ = pd.DataFrame(np.zeros((1, 15)), columns=["horse_cnt", "result_rank", "racecourse", "len", "weather", "soil_condition",
+                                                    "popularity", "weight", "sec", "diff_accident", "threeF", "corner_order_1", "corner_order_2", "corner_order_3", "money"])
 
     weightLog = 0
     dropList = []
@@ -117,9 +117,17 @@ def make_race_data(df, l=10):
 
             # コーナー通過順
             try:
-                df_.loc[idx, 'corner_order'] = row['コーナー通過順']
+                df_.loc[idx, 'corner_order_1'] = row['コーナー通過順'].split('-')[0]
             except:
-                df_.loc[idx, 'corner_order'] = 0
+                df_.loc[idx, 'corner_order_1'] = 0
+            try:
+                df_.loc[idx, 'corner_order_2'] = row['コーナー通過順'].split('-')[1]
+            except:
+                df_.loc[idx, 'corner_order_2'] = 0
+            try:
+                df_.loc[idx, 'corner_order_3'] = row['コーナー通過順'].split('-')[2]
+            except:
+                df_.loc[idx, 'corner_order_3'] = 0
 
             # タイム(秒)
             try:

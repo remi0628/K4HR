@@ -1,33 +1,54 @@
 import glob
+import time
 import datetime
 import numpy as np
 import pandas as pd
 import os
 import re
 import traceback
+from concurrent import futures
 
 
-def read_csv():
+def read_csv(race, date):
+    print(os.path.basename(race))
+    horses = glob.glob(race + "/*.csv")
+    horses = sorted(horses[0:-1], key=lambda x: int(re.findall("\d+", os.path.basename(x))[0]))
+
+    race_horse = []
+    rankings = np.zeros(16)
+    for i in range(16):
+        if len(horses) > i:
+            birth = [int(x) for x in re.findall("\d+", horses[i])[-3:]]
+            df = pd.read_csv(horses[i], encoding="cp932")
+            df, ranking = make_race_data(df, date, birth, 10)
+
+            if ranking != 0:  # 欠場等でないなら
+                if rankings[ranking - 1] == 0:  # 同着の場合来た順に次に、本来払い戻し等どう処理されるか調べる必要性あり
+                    rankings[ranking - 1] = int(re.findall("\d+", os.path.basename(horses[i]))[0])
+                else:
+                    rankings[ranking] = int(re.findall("\d+", os.path.basename(horses[i]))[0])
+
+            race_horse.append(df[:10].values)
+        else:
+            race_horse.append(np.zeros((10, 17)))
+
+    return race_horse, rankings
+
+
+def make_npy():
     races = glob.glob("data/test_race/*")
 
-    X = []
-    Y = []
-    for race in races:
-        year, month, day, roundNumber, length, roadState, top = os.path.basename(race).split("-") # raceファイル名から情報を取得
-        Y.append(int(top) - 1)
-        print(os.path.basename(race))
-        horses = glob.glob(race + "/*.csv") # ファイル内全csvファイルpath取得
-        horses = sorted(horses[0:-1], key=lambda x: int(re.findall("\d+", os.path.basename(x))[0])) # 馬番号順にソート
-        race_horse = []
-        for i in range(16): # 馬番が多くても16まで
-            if len(horses) > i:
-                df = pd.read_csv(horses[i], encoding="cp932") # カンマ区切りのデータを読み込むのでread_csv
-                df, check = make_race_data(df, 10)
-                race_horse.append(df[:10].values)
-            else:
-                race_horse.append(np.zeros((10, 16)))
-            X.append(race_horse)
-    # 同じように保存する　後々分かりやすくする為
+    future_list = []
+    with futures.ProcessPoolExecutor(max_workers=None) as executor:
+        for i in range(len(races)):
+            year, month, day, roundNumber, length, roadState, top = os.path.basename(races[i]).split("-")
+            future = executor.submit(fn=read_csv, race=races[i], date=[year, month, day])
+            future_list.append(future)
+        _ = futures.as_completed(fs=future_list)
+
+    X = [future.result()[0] for future in future_list]
+    Y = [future.result()[1] for future in future_list]
+
     X = np.array(X)
     Y = np.array(Y)
     X = X.astype("float")
@@ -42,18 +63,18 @@ def inZeroOne(num):
     else:
         return num
 
-def make_race_data(df, l=10): # 取得するのは過去のデータ10件まで
-    # ゼロ埋めのpandasデータフレーム作成 (rows=1, columns=16)
-    df_ = pd.DataFrame(np.zeros((1, 16)), columns=["horse_cnt", "result_rank", "racecourse", "len", "weather", "soil_condition",
-                                                    "popularity", "weight", "borden_weight",
-                                                    "sec", "diff_accident", "threeF", "corner_order_1", "corner_order_2", "corner_order_3", "money"])
 
+def make_race_data(df, date, birth, l=10):
+    df_ = pd.DataFrame(np.zeros((1, 17)), columns=["horse_cnt", "result_rank", "racecourse", "len", "weather", "soil_condition",
+                                                    "popularity", "weight", "borden_weight", "birth_days",
+                                                    "sec", "diff_accident", "threeF", "corner_order_1", "corner_order_2", "corner_order_3", "money"])
     weightLog = 0
     dropList = []
     check = False
-    for idx, row in df.iterrows(): # 1行ずつ取り出す
+    ranking = 0
+    for idx, row in df.iterrows():
         check = True
-        if str(row['着順']) == "nan" or str(row['人気']) == "nan": # nonの場合0
+        if str(row['着順']) == "nan" or str(row['人気']) == "nan" or str(row['タイム']) == "nan":
             dropList.append(idx)
             df_.loc[idx] = 0
             continue
@@ -109,17 +130,26 @@ def make_race_data(df, l=10): # 取得するのは過去のデータ10件まで
             else:
                 df_.loc[idx, 'racecourse'] = 0
 
-            # 差/事故
+            # タイム(秒)
             try:
-                df_.loc[idx, 'diff_accident'] = inZeroOne(float(row['差/事故']) / 10)
+                time = datetime.datetime.strptime(str(row['タイム']), '%M:%S.%f')
+                df_.loc[idx, 'sec'] = inZeroOne(
+                    (float(time.minute * 60 + time.second + time.microsecond / 1000000) - 40) / 250)
             except:
-                df_.loc[idx, 'diff_accident'] = 0
+                time = datetime.datetime.strptime(str(row['タイム']), '%S.%f')
+                df_.loc[idx, 'sec'] = inZeroOne((float(time.second + time.microsecond / 1000000) - 40) / 250)
 
             # 上3F（3ハロン）
             try:
                 df_.loc[idx, 'threeF'] = inZeroOne((float(row['上3F']) - 30) / 30)
-            except:
+            except ValueError:
                 df_.loc[idx, 'threeF'] = 0
+
+            # 差/事故
+            try:
+                df_.loc[idx, 'diff_accident'] = inZeroOne(float(row['差/事故']) / 10)
+            except ValueError:
+                df_.loc[idx, 'diff_accident'] = 0
 
             # コーナー通過順
             try:
@@ -135,14 +165,26 @@ def make_race_data(df, l=10): # 取得するのは過去のデータ10件まで
             except:
                 df_.loc[idx, 'corner_order_3'] = 0
 
-            # タイム(秒)
-            try:
-                time = datetime.datetime.strptime(str(row['タイム']), '%M:%S.%f')
-                df_.loc[idx, 'sec'] = inZeroOne(
-                    (float(time.minute * 60 + time.second + time.microsecond / 1000000) - 40) / 250)
-            except:
-                time = datetime.datetime.strptime(str(row['タイム']), '%S.%f')
-                df_.loc[idx, 'sec'] = inZeroOne((float(time.second + time.microsecond / 1000000) - 40) / 250)
+            # レース日
+            raceDay = [int(x) for x in row['年月日'].split("/")]
+            date = [int(x) for x in date]
+            if raceDay[0] < 50:
+                raceDay[0] += 2000
+            elif raceDay[0] < 1900:
+                raceDay[0] += 1900
+
+            birthDate = datetime.date(raceDay[0], raceDay[1], raceDay[2]) - datetime.date(birth[0], birth[1], birth[2])
+            df_.loc[idx, 'birth_days'] = inZeroOne((birthDate.days - 700) / 1000)
+
+            if raceDay == date:  # 当日の場合不明なもの
+                ranking = int(row['着順'].split('/')[0])
+                df_.loc[idx, 'money'] = 0
+                df_.loc[idx, 'result_rank'] = 0
+                df_.loc[idx, 'popularity'] = 0
+                df_.loc[idx, 'sec'] = 0
+                df_.loc[idx, 'weight'] = 0
+                df_.loc[idx, 'diff_accident'] = 0
+                df_.loc[idx, 'threeF'] = 0
 
         except:  # エラーなら全部0
             traceback.print_exc()
@@ -154,20 +196,17 @@ def make_race_data(df, l=10): # 取得するのは過去のデータ10件まで
     if not check:
         df_.drop(0, axis=0, inplace=True)
 
-    leng = len(df_)
-    if leng == 0:
-        check = False
-    else:
-        check = True
 
     while len(df_) < l:
         df_.loc[len(df_) + len(dropList)] = 0
 
-    return df_, check
+    return df_, ranking
 
 
 def main():
-    read_csv()
+    now = time.time()
+    make_npy()
+    print("レースデータ前処理時間　：", time.time() - now)
 
 
 if __name__ == '__main__':

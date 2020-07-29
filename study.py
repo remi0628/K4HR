@@ -9,6 +9,8 @@ gpu_options = tf.compat.v1.GPUOptions(per_process_gpu_memory_fraction=0.7)
 sess = tf.compat.v1.Session(config=tf.compat.v1.ConfigProto(gpu_options=gpu_options))
 ### remi ###
 
+#X = np.load("data/data_jupyter/X.npy")
+#ranking= np.load("data/data_jupyter/Y.npy")
 X = np.load("data/X.npy")
 ranking= np.load("data/Y.npy")
 Y = ranking[:, 0] - 1  # 一位のみ取得

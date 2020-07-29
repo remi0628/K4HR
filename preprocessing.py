@@ -1,5 +1,4 @@
 import glob
-import datetime
 import time
 import datetime
 import numpy as np
@@ -13,13 +12,12 @@ from concurrent import futures
 def read_csv(race, date):
     print(os.path.basename(race))
     horses = glob.glob(race + "/*.csv")
-    horses = sorted(horses, key=lambda x: int(re.findall("\d+", os.path.basename(x))[0]))
+    horses = sorted(horses[0:-1], key=lambda x: int(re.findall("\d+", os.path.basename(x))[0]))
 
     race_horse = []
     rankings = np.zeros(16)
     for i in range(16):
         if len(horses) > i:
-
             birth = [int(x) for x in re.findall("\d+", horses[i])[-3:]]
             df = pd.read_csv(horses[i], encoding="cp932")
             df, ranking = make_race_data(df, date, birth, 10)

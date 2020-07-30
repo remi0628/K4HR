@@ -24,5 +24,6 @@ for n in n_estimators:
     model.fit(x_train, y_train)                 # モデル作成実行
     pred_y = model.predict(x_test)              # 予測実行
     accuracy.append(accuracy_score(y_test, pred_y)) # 精度格納
+    print('...' + str(n))
 plt.plot(n_estimators, accuracy)
 plt.show()

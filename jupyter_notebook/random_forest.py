@@ -41,7 +41,7 @@ def forest_2():
     drop_col = ['result_rank', 'money']
     #x = df.drop(['result_rank'],axis=1) # 説明変数のみ入れる (1位の馬番)
     x = df.drop(drop_col, axis=1) # 説明変数のみ入れる (1位の馬番)
-    y = df['result_rank']*16 # 正解クラス
+    y = df['result_rank']*16 # 正解クラス yは整数にしないとエラー吐く
     print(x.count())
     # 訓練用の説明変数と正解クラス、評価用の説明変数と正解クラスに分割
     x_train, x_test, y_train, y_test = train_test_split(x, y, train_size=0.85)

@@ -1,8 +1,8 @@
 import datetime
 
 # crawlerを回す範囲
-MIN_DATE = datetime.date(year=2010, month=4, day=1)
-MAX_DATE = datetime.date(year=2012, month=4, day=1)
+MIN_DATE = datetime.date(year=2017, month=4, day=1)
+MAX_DATE = datetime.date(year=2019, month=4, day=1)
 
 # craler並列化した際のパワーをどのくらい使用するか
 MAX_THREAD = 4
@@ -12,7 +12,7 @@ MAX_THREAD = 4
 FILE_NUM = 1
 ### preprocessing_another.py, random_forest.py共通
 # どのプロフラムを使用するか
-# [1] = (レース, 出馬, 過去10レース, 特徴量), [2] = (過去レース, 特徴量)
+# [1] = data(レース, 出馬, 過去10レース, 特徴量), [2] = data(レース数, 過去レース, 特徴量)
 SWITTCH_NUM = 2
 
 # Link

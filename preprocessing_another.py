@@ -14,7 +14,7 @@ FILE_NUM = crawler_settings.FILE_NUM
 SWITTCH_NUM = crawler_settings.SWITTCH_NUM
 
 
-### (過去レース数, 特徴量)
+### (レース数, 過去レース数, 特徴量)
 global horse_id
 global race_horse_2
 race_horse_2 = []

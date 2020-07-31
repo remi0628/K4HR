@@ -10,6 +10,7 @@ MAX_THREAD = 4
 ### preprocessing_another.py
  #取得するファイルの制限指定 指定なしの場合0 （今使用していない）
 FILE_NUM = 1
+### preprocessing_another.py, random_forest.py共通
 # どのプロフラムを使用するか
 # [1] = (レース, 出馬, 過去10レース, 特徴量), [2] = (過去レース, 特徴量)
 SWITTCH_NUM = 2

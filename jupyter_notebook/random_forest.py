@@ -6,8 +6,8 @@ from sklearn.ensemble import RandomForestClassifier
 from sklearn.model_selection import train_test_split
 from sklearn.metrics import accuracy_score
 
-X = np.load("../data/data_jupyter/X.npy")
-Y = np.load("../data/data_jupyter/Y.npy")
+X = np.load("../data/data_jupyter/dim_4/X.npy")
+Y = np.load("../data/data_jupyter/dim_4/Y.npy")
 X.reshape((X.shape[0], -1))
 #print('X.shape：' + str(len(X)) + ',' + str(len(X[0])) + ',' + str(len(X[0][0])) + ',' + str(len(X[0][0][0])))
 #print('Y.shape：' + str(len(Y)))

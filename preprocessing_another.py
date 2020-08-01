@@ -40,7 +40,7 @@ def read_csv_2(race, date):
 
 
 def make_npy_2():
-    races = glob.glob("data/data_jupyter_race/*")
+    races = glob.glob("data/jupyter_race_data/*")
 
     global race_horse_2
     future_list = []
@@ -52,7 +52,7 @@ def make_npy_2():
     print('格納データ数：' + str(len(race_horse_2)) )
     X = np.array(race_horse_2)
     X = X.astype("float")
-    np.save("data/data_jupyter/dim_2/X.npy", X)
+    np.save("data/jupyter_preprocessing_data/dim_3/X.npy", X)
 
 
 def make_race_data_2(df, date, birth, l=10):
@@ -216,7 +216,7 @@ def read_csv(race, date):
 
 
 def make_npy():
-    races = glob.glob("data/data_jupyter_race/*")
+    races = glob.glob("data/jupyter_race_data/*")
 
     future_list = []
     with futures.ProcessPoolExecutor(max_workers=None) as executor:
@@ -232,8 +232,8 @@ def make_npy():
     X = np.array(X)
     Y = np.array(Y)
     X = X.astype("float")
-    np.save("data/data_jupyter/dim_4/X.npy", X)
-    np.save("data/data_jupyter/dim_4/Y.npy", Y)
+    np.save("data/jupyter_preprocessing_data/dim_4/X.npy", X)
+    np.save("data/jupyter_preprocessing_data/dim_4/Y.npy", Y)
 
 def inZeroOne(num):
     if num > 1:

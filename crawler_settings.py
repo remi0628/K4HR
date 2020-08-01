@@ -14,6 +14,10 @@ FILE_NUM = 1
 # どのプロフラムを使用するか
 # [1] = data(レース, 出馬, 過去10レース, 特徴量), [2] = data(レース数, 過去レース, 特徴量)
 SWITTCH_NUM = 2
+### random_forest.py
+MODEL_FILE_NAME = '../data/model/RandomForest/random_forest_model.sav'
+### model_validation.py
+LOAD_MODEL_FILE_NAME = '../data/model/RandomForest/epo300_score96_model.sav'
 
 # Link
 CSV_DATA_PATH = 'data/horse_blank_data/'

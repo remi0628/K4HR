@@ -7,6 +7,11 @@ MAX_DATE = datetime.date(year=2019, month=4, day=1)
 # craler並列化した際のパワーをどのくらい使用するか
 MAX_THREAD = 4
 
+# preprocessing.py
+# 下級レースの除外範囲、6で1~6を除外、7~12を採用
+EXCLUDE_LOWER_RACE = 0
+
+
 ### preprocessing_another.py
  #取得するファイルの制限指定 指定なしの場合0 （今使用していない）
 FILE_NUM = 1

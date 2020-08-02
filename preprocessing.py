@@ -1,4 +1,5 @@
 import glob
+import datetime
 import time
 import datetime
 import numpy as np
@@ -7,17 +8,21 @@ import os
 import re
 import traceback
 from concurrent import futures
+import crawler_settings
 
 
 def read_csv(race, date):
     print(os.path.basename(race))
     horses = glob.glob(race + "/*.csv")
+    # horses = [i for i in horses if os.path.basename(i) != "refund.csv"]
     horses = sorted(horses[0:-1], key=lambda x: int(re.findall("\d+", os.path.basename(x))[0]))
 
+    moneys = pd.read_csv(race + "/refund.csv", encoding="cp932").loc[0]
     race_horse = []
     rankings = np.zeros(16)
     for i in range(16):
         if len(horses) > i:
+
             birth = [int(x) for x in re.findall("\d+", horses[i])[-3:]]
             df = pd.read_csv(horses[i], encoding="cp932")
             df, ranking = make_race_data(df, date, birth, 10)
@@ -32,7 +37,7 @@ def read_csv(race, date):
         else:
             race_horse.append(np.zeros((10, 20)))
 
-    return race_horse, rankings
+    return race_horse, rankings, moneys
 
 
 def make_npy():
@@ -42,18 +47,25 @@ def make_npy():
     with futures.ProcessPoolExecutor(max_workers=None) as executor:
         for i in range(len(races)):
             year, month, day, roundNumber, length, roadState, top = os.path.basename(races[i]).split("-")
+            #  下級レースの除外
+            if int(roundNumber) <= crawler_settings.EXCLUDE_LOWER_RACE:
+                continue
             future = executor.submit(fn=read_csv, race=races[i], date=[year, month, day])
             future_list.append(future)
         _ = futures.as_completed(fs=future_list)
 
     X = [future.result()[0] for future in future_list]
     Y = [future.result()[1] for future in future_list]
+    P = [future.result()[2] for future in future_list]
 
     X = np.array(X)
     Y = np.array(Y)
+    P = np.array(P)
     X = X.astype("float")
-    np.save("data/X2010-01-01-2020-04-01.npy", X)
-    np.save("data/Y2010-01-01-2020-04-01.npy", Y)
+    name = "2010-01-01-2020-04-01"
+    np.save(f"data/X{name}.npy", X)
+    np.save(f"data/Y{name}.npy", Y)
+    np.save(f"data/P{name}.npy", P)
 
 
 def inZeroOne(num):
@@ -166,7 +178,6 @@ def make_race_data(df, date, birth, l=10):
         df_.drop(i, axis=0, inplace=True)
     if not check:
         df_.drop(0, axis=0, inplace=True)
-
 
     while len(df_) < l:
         df_.loc[len(df_) + len(dropList)] = 0
